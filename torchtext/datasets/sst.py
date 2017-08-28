@@ -20,8 +20,11 @@ class SST(data.ZipDataset):
         Arguments:
             path: Path to the data file.
             text_field: The field that will be used for text data.
-            newline_eos: Whether to add an <eos> token for every newline in the
-                data file. Default: True.
+            label_field: The field that will be used for label data.
+            subtrees: Whether to include sentiment-tagged subphrases
+                in addition to complete examples. Default: False.
+            fine_grained: Whether to use 5-class instead of 3-class
+                labeling. Default: False.
             Remaining keyword arguments: Passed to the constructor of
                 data.Dataset.
         """
@@ -44,7 +47,7 @@ class SST(data.ZipDataset):
     def splits(cls, text_field, label_field, root='.',
                train='train.txt', validation='dev.txt', test='test.txt',
                train_subtrees=False, **kwargs):
-        """Create dataset objects for splits of the SSTB dataset.
+        """Create dataset objects for splits of the SST dataset.
 
         Arguments:
             text_field: The field that will be used for the sentence.
@@ -75,9 +78,8 @@ class SST(data.ZipDataset):
                      if d is not None)
 
     @classmethod
-    def iters(cls, batch_size=32, device=0, root='.', wv_dir='.',
-              wv_type=None, wv_dim='300d', **kwargs):
-        """Creater iterator objects for splits of the SSTB dataset.
+    def iters(cls, batch_size=32, device=0, root='.', vectors=None, **kwargs):
+        """Creater iterator objects for splits of the SST dataset.
 
         Arguments:
             batch_size: Batch_size
@@ -86,9 +88,8 @@ class SST(data.ZipDataset):
             root: The root directory that the dataset's zip archive will be
                 expanded into; therefore the directory in whose trees
                 subdirectory the data files will be stored.
-            wv_dir, wv_type, wv_dim: Passed to the Vocab constructor for the
-                text field. The word vectors are accessible as
-                train.dataset.fields['text'].vocab.vectors.
+            vectors: one of the available pretrained vectors or a list with each
+                element one of the available pretrained vectors (see Vocab.load_vectors)
             Remaining keyword arguments: Passed to the splits method.
         """
         TEXT = data.Field()
@@ -96,7 +97,7 @@ class SST(data.ZipDataset):
 
         train, val, test = cls.splits(TEXT, LABEL, root=root, **kwargs)
 
-        TEXT.build_vocab(train, wv_dir=wv_dir, wv_type=wv_type, wv_dim=wv_dim)
+        TEXT.build_vocab(train, vectors=vectors)
         LABEL.build_vocab(train)
 
         return data.BucketIterator.splits(
