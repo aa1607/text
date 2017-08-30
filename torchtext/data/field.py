@@ -205,13 +205,14 @@ class Field(object):
 
 class ReversibleField(Field):
 
-    try:
-        import revtok
-        detokenize = revtok.detokenize
-    except ImportError:
-        @staticmethod
-        def detokenize(ex):
-            raise RuntimeError("Please install revtok.")
+    @staticmethod
+    def detokenize(ex):
+        try:
+            import revtok
+            return revtok.detokenize(ex)
+        except ImportError:
+            print("Please install revtok.")
+            raise
 
     def __init__(self, **kwargs):
         if kwargs.get('tokenize') not in ('revtok', 'subword'):
@@ -223,8 +224,8 @@ class ReversibleField(Field):
             batch.t_()
         batch = batch.tolist()
         batch = [[self.vocab.itos[ind] for ind in ex] for ex in batch]
-        batch = [filter(ex, lambda tok: tok not in (
-            self.init_token, self.eos_token, self.pad_token)) for ex in batch]
+        batch = [filter(lambda tok: tok not in (
+            self.init_token, self.eos_token, self.pad_token), ex) for ex in batch]
         return [self.detokenize(ex) for ex in batch]
 
 
