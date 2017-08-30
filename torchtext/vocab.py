@@ -175,6 +175,7 @@ def SubwordVocab(Vocab):
         if vectors is not None:
             self.load_vectors(vectors, unk_init=unk_init, expand_vocab=expand_vocab)
 
+
 class Vectors(object):
 
     def __init__(self, unk_init=torch.Tensor.zero_):
