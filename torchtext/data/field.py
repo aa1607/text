@@ -224,9 +224,16 @@ class ReversibleField(Field):
             batch.t_()
         batch = batch.tolist()
         batch = [[self.vocab.itos[ind] for ind in ex] for ex in batch]
-        batch = [filter(lambda tok: tok not in (
-            self.init_token, self.eos_token, self.pad_token), ex) for ex in batch]
-        return [self.detokenize(ex) for ex in batch]
+        out = []
+        for ex in batch:
+            ex_out = []
+            for tok in ex:
+                if tok == self.eos_token:
+                    break
+                if tok not in (self.init_token, self.pad_token):
+                    ex_out.append(tok)
+            out.append(ex_out)
+        return list(map(self.detokenize, out))
 
 
 class SubwordField(ReversibleField):
